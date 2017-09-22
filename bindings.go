@@ -89,6 +89,16 @@ func DeviceHandleByIndex(idx uint) (Device, error) {
 	return Device{dev}, errorString(r)
 }
 
+// MinorNumber returns the minor number for the device.
+// The minor number for the device is such that the Nvidia device node
+// file for each GPU will have the form /dev/nvidia[minor number].
+func (d Device) MinorNumber() (uint, error) {
+	var n C.uint
+
+	r := C.nvmlDeviceGetMinorNumber(d.dev, &n)
+	return uint(n), errorString(r)
+}
+
 // Name returns the product name of the device.
 func (d Device) Name() (string, error) {
 	var name [szName]C.char

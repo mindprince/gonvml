@@ -54,6 +54,13 @@ func main() {
 			return
 		}
 
+		minorNumber, err := dev.MinorNumber()
+		if err != nil {
+			fmt.Printf("\tdev.MinorNumber() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\tminorNumber: %v\n", minorNumber)
+
 		name, err := dev.Name()
 		if err != nil {
 			fmt.Printf("\tdev.Name() error: %v\n", err)
