@@ -124,3 +124,12 @@ func (d Device) UtilizationRates() (uint, uint, error) {
 	r := C.nvmlDeviceGetUtilizationRates(d.dev, &utilization)
 	return uint(utilization.gpu), uint(utilization.memory), errorString(r)
 }
+
+// PowerUsage returns the power usage for this GPU and its associated circuitry
+// in milliwatts. The reading is accurate to within +/- 5% of current power draw.
+func (d Device) PowerUsage() (uint, error) {
+	var n C.uint
+
+	r := C.nvmlDeviceGetPowerUsage(d.dev, &n)
+	return uint(n), errorString(r)
+}

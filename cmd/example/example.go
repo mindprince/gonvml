@@ -81,6 +81,13 @@ func main() {
 			return
 		}
 		fmt.Printf("\tutilization.gpu: %v, utilization.memory: %v\n", gpuUtilization, memoryUtilization)
+
+		powerDraw, err := dev.PowerUsage()
+		if err != nil {
+			fmt.Printf("\tdev.PowerUsage() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\tpower.draw: %v\n", powerDraw)
 		fmt.Println()
 	}
 }
