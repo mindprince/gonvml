@@ -40,6 +40,9 @@ nvmlReturn_t nvmlInit_dl(void) {
  * Call this once NVML is no longer being used.
  */
 nvmlReturn_t nvmlShutdown_dl(void) {
+  if (handle == NULL) {
+    return NVML_SUCCESS;
+  }
   nvmlReturn_t r = nvmlShutdown();
   if (r != NVML_SUCCESS) {
     return (r);
