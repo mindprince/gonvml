@@ -19,16 +19,16 @@ limitations under the License.
 
 #include "nvml.h"
 
-// handle for the dynamically loaded libnvidia-ml.so
-static void *handle;
+// nvmlHandle is the handle for dynamically loaded libnvidia-ml.so
+void *nvmlHandle;
 
 /**
  * Loads the "libnvidia-ml.so.1" shared library and initializes NVML.
  * Call this before calling any other methods.
  */
 nvmlReturn_t nvmlInit_dl(void) {
-  handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY | RTLD_GLOBAL);
-  if (handle == NULL) {
+  nvmlHandle = dlopen("libnvidia-ml.so.1", RTLD_LAZY | RTLD_GLOBAL);
+  if (nvmlHandle == NULL) {
     return (NVML_ERROR_LIBRARY_NOT_FOUND);
   }
   return (nvmlInit());
@@ -40,12 +40,12 @@ nvmlReturn_t nvmlInit_dl(void) {
  * Call this once NVML is no longer being used.
  */
 nvmlReturn_t nvmlShutdown_dl(void) {
-  if (handle == NULL) {
+  if (nvmlHandle == NULL) {
     return NVML_SUCCESS;
   }
   nvmlReturn_t r = nvmlShutdown();
   if (r != NVML_SUCCESS) {
     return (r);
   }
-  return (dlclose(handle) ? NVML_ERROR_UNKNOWN : NVML_SUCCESS);
+  return (dlclose(nvmlHandle) ? NVML_ERROR_UNKNOWN : NVML_SUCCESS);
 }
