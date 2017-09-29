@@ -17,7 +17,39 @@ limitations under the License.
 package gonvml
 
 // #cgo LDFLAGS: -ldl -Wl,--unresolved-symbols=ignore-in-object-files
-// #include "nvml/nvml_dl.c"
+/*
+#include <stddef.h>
+#include <dlfcn.h>
+
+#include "nvml.h"
+
+// nvmlHandle is the handle for dynamically loaded libnvidia-ml.so
+void *nvmlHandle;
+
+// Loads the "libnvidia-ml.so.1" shared library and initializes NVML.
+// Call this before calling any other methods.
+nvmlReturn_t nvmlInit_dl(void) {
+  nvmlHandle = dlopen("libnvidia-ml.so.1", RTLD_LAZY | RTLD_GLOBAL);
+  if (nvmlHandle == NULL) {
+    return (NVML_ERROR_LIBRARY_NOT_FOUND);
+  }
+  return (nvmlInit());
+}
+
+// Shuts down NVML and decrements the reference count on the dynamically loaded
+// "libnvidia-ml.so.1" library.
+// Call this once NVML is no longer being used.
+nvmlReturn_t nvmlShutdown_dl(void) {
+  if (nvmlHandle == NULL) {
+    return NVML_SUCCESS;
+  }
+  nvmlReturn_t r = nvmlShutdown();
+  if (r != NVML_SUCCESS) {
+    return (r);
+  }
+  return (dlclose(nvmlHandle) ? NVML_ERROR_UNKNOWN : NVML_SUCCESS);
+}
+*/
 import "C"
 
 import (
