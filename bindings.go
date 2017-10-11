@@ -119,6 +119,7 @@ import (
 const (
 	szDriver = C.NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE
 	szName   = C.NVML_DEVICE_NAME_BUFFER_SIZE
+	szUUID   = C.NVML_DEVICE_UUID_BUFFER_SIZE
 )
 
 var errLibraryNotLoaded = errors.New("could not load NVML library")
@@ -198,6 +199,16 @@ func (d Device) MinorNumber() (uint, error) {
 	var n C.uint
 	r := C.nvmlDeviceGetMinorNumber(d.dev, &n)
 	return uint(n), errorString(r)
+}
+
+// UUID returns the globally unique immutable UUID associated with this device.
+func (d Device) UUID() (string, error) {
+	if C.nvmlHandle == nil {
+		return "", errLibraryNotLoaded
+	}
+	var uuid [szUUID]C.char
+	r := C.nvmlDeviceGetUUID(d.dev, &uuid[0], szUUID)
+	return C.GoString(&uuid[0]), errorString(r)
 }
 
 // Name returns the product name of the device.

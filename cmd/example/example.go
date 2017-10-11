@@ -61,6 +61,13 @@ func main() {
 		}
 		fmt.Printf("\tminorNumber: %v\n", minorNumber)
 
+		uuid, err := dev.UUID()
+		if err != nil {
+			fmt.Printf("\tdev.UUID() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\tuuid: %v\n", uuid)
+
 		name, err := dev.Name()
 		if err != nil {
 			fmt.Printf("\tdev.Name() error: %v\n", err)
