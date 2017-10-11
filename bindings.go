@@ -20,6 +20,7 @@ package gonvml
 /*
 #include <stddef.h>
 #include <dlfcn.h>
+#include <stdlib.h>
 
 #include "nvml.h"
 
@@ -49,12 +50,70 @@ nvmlReturn_t nvmlShutdown_dl(void) {
   }
   return (dlclose(nvmlHandle) ? NVML_ERROR_UNKNOWN : NVML_SUCCESS);
 }
+
+// This function is here because the API provided by NVML is not very user
+// friendly. This function can be used to get average utilization.gpu or
+// power.draw.
+//
+// `device`: The identifier of the target device.
+// `type`: Type of sampling event. Only NVML_TOTAL_POWER_SAMPLES and NVML_GPU_UTILIZATION_SAMPLES are supported.
+// `lastSeenTimeStamp`: Return average using samples with timestamp greather than this timestamp. Unix epoch in micro seconds.
+// `averageUsage`: Reference in which average is returned.
+//
+// In my experiments, I found that NVML_GPU_UTILIZATION_SAMPLES buffer stores
+// 100 samples that are uniformly spread with ~6 samples per second. So the
+// buffer stores last ~16s of data.
+// NVML_TOTAL_POWER_SAMPLES buffer stores 120 samples, but in different runs I
+// noticed them to be non-uniformly separated. Sometimes 120 samples only
+// consisted of 10s of data and sometimes they were spread over 60s.
+//
+nvmlReturn_t nvmlDeviceGetAverageUsage(nvmlDevice_t device, nvmlSamplingType_t type, unsigned long long lastSeenTimeStamp, unsigned int* averageUsage) {
+  if (nvmlHandle == NULL) {
+    return (NVML_ERROR_LIBRARY_NOT_FOUND);
+  }
+
+  // We don't really use this because both the metrics we support
+  // averagePowerUsage and averageGPUUtilization are unsigned int.
+  nvmlValueType_t sampleValType;
+
+  // This will be set to the number of samples that can be queried. We would
+  // need to allocate an array of this size to store the samples.
+  unsigned int sampleCount;
+
+  // Invoking this method with `samples` set to NULL sets the sampleCount.
+  nvmlReturn_t r = nvmlDeviceGetSamples(device, type, lastSeenTimeStamp, &sampleValType, &sampleCount, NULL);
+  if (r != NVML_SUCCESS) {
+    return (r);
+  }
+
+  // Allocate memory to store sampleCount samples.
+  // In my experiments, the sampleCount at this stage was always 120 for
+  // NVML_TOTAL_POWER_SAMPLES and 100 for NVML_GPU_UTILIZATION_SAMPLES
+  nvmlSample_t* samples = (nvmlSample_t*) malloc(sampleCount * sizeof(nvmlSample_t));
+
+  r = nvmlDeviceGetSamples(device, type, lastSeenTimeStamp, &sampleValType, &sampleCount, samples);
+  if (r != NVML_SUCCESS) {
+    free(samples);
+    return (r);
+  }
+
+  int i = 0;
+  unsigned int sum = 0;
+  for (; i < sampleCount; i++) {
+    sum += samples[i].sampleValue.uiVal;
+  }
+  *averageUsage = sum/sampleCount;
+
+  free(samples);
+  return (r);
+}
 */
 import "C"
 
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 const (
@@ -181,5 +240,30 @@ func (d Device) PowerUsage() (uint, error) {
 	}
 	var n C.uint
 	r := C.nvmlDeviceGetPowerUsage(d.dev, &n)
+	return uint(n), errorString(r)
+}
+
+// AveragePowerUsage returns the power usage for this GPU and its associated circuitry
+// in milliwatts averaged over the samples collected in the last `since` duration.
+func (d Device) AveragePowerUsage(since time.Duration) (uint, error) {
+	if C.nvmlHandle == nil {
+		return 0, errLibraryNotLoaded
+	}
+	lastTs := C.ulonglong(time.Now().Add(-1*since).UnixNano() / 1000)
+	var n C.uint
+	r := C.nvmlDeviceGetAverageUsage(d.dev, C.NVML_TOTAL_POWER_SAMPLES, lastTs, &n)
+	return uint(n), errorString(r)
+}
+
+// AverageGPUUtilization returns the utilization.gpu metric (percent of time
+// one of more kernels were executing on the GPU) averaged over the samples
+// collected in the last `since` duration.
+func (d Device) AverageGPUUtilization(since time.Duration) (uint, error) {
+	if C.nvmlHandle == nil {
+		return 0, errLibraryNotLoaded
+	}
+	lastTs := C.ulonglong(time.Now().Add(-1*since).UnixNano() / 1000)
+	var n C.uint
+	r := C.nvmlDeviceGetAverageUsage(d.dev, C.NVML_GPU_UTILIZATION_SAMPLES, lastTs, &n)
 	return uint(n), errorString(r)
 }

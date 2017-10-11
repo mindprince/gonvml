@@ -88,6 +88,20 @@ func main() {
 			return
 		}
 		fmt.Printf("\tpower.draw: %v\n", powerDraw)
+
+		averagePowerDraw, err := dev.AveragePowerUsage(10 * time.Second)
+		if err != nil {
+			fmt.Printf("\tdev.AveragePowerUsage() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\taverage power.draw for last 10s: %v\n", averagePowerDraw)
+
+		averageGPUUtilization, err := dev.AverageGPUUtilization(10 * time.Second)
+		if err != nil {
+			fmt.Printf("\tdev.AverageGPUUtilization() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\taverage utilization.gpu for last 10s: %v\n", averageGPUUtilization)
 		fmt.Println()
 	}
 }
