@@ -11,10 +11,9 @@ The [NVML API
 Reference](http://docs.nvidia.com/deploy/nvml-api/nvml-api-reference.html)
 describe various methods that are available as part of NVML.
 
-The `nvml/nvml.h` file is included in this repository so that we don't depend on
+The `nvml.h` file is included in this repository so that we don't depend on
 the presence of NVML in the build environment.
 
-The `nvml/nvml_dl.c` uses `dlopen` to dynamically load NVML and makes its
-functions available.
-
-The `bindings.go` file is the cgo bridge which calls the NVML functions.
+The `bindings.go` file is the cgo bridge which calls the NVML functions. The
+cgo preamble in `bindings.go` uses `dlopen` to dynamically load NVML and makes
+its functions available.
