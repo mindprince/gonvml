@@ -1,0 +1,6 @@
+load("@io_bazel_rules_go//go:def.bzl", "gazelle", "go_library")
+
+gazelle(
+    name = "gazelle",
+    prefix = "github.com/mindprince/gonvml",
+)
