@@ -4,3 +4,15 @@ gazelle(
     name = "gazelle",
     prefix = "github.com/mindprince/gonvml",
 )
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "bindings.go",
+        "nvml.h",
+    ],
+    cgo = True,
+    clinkopts = ["-ldl -Wl,--unresolved-symbols=ignore-in-object-files"],
+    importpath = "github.com/mindprince/gonvml",
+    visibility = ["//visibility:public"],
+)
