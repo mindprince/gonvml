@@ -384,7 +384,7 @@ func (d Device) MemoryInfo() (uint64, uint64, error) {
 
 // UtilizationRates returns the percent of time over the past sample period during which:
 // utilization.gpu: one or more kernels were executing on the GPU.
-// utilizatoin.memory: global (device) memory was being read or written.
+// utilization.memory: global (device) memory was being read or written.
 func (d Device) UtilizationRates() (uint, uint, error) {
 	if C.nvmlHandle == nil {
 		return 0, 0, errLibraryNotLoaded
