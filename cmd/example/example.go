@@ -109,6 +109,20 @@ func main() {
 			return
 		}
 		fmt.Printf("\taverage utilization.gpu for last 10s: %v\n", averageGPUUtilization)
+
+		temperature, err := dev.Temperature()
+		if err != nil {
+			fmt.Printf("\tdev.Temperature() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\ttemperature.gpu: %v C\n", temperature)
+
+		fanSpeed, err := dev.FanSpeed()
+		if err != nil {
+			fmt.Printf("\tdev.FanSpeed() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\tfan.speed: %v%%\n", fanSpeed)
 		fmt.Println()
 	}
 }
