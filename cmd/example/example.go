@@ -92,10 +92,24 @@ func main() {
 		powerLimit, err := dev.PowerLimit()
 		if err != nil {
 			fmt.Printf("\tdev.PowerLimit() error: %v\n", err)
-			return
+		} else {
+			fmt.Printf("\tpower.limit: %v\n", powerLimit)
 		}
-		fmt.Printf("\tpower.limit: %v\n", powerLimit)
 
+		minLimit, maxLimit, err := dev.PowerLimitConstraints()
+		if err != nil {
+			fmt.Printf("\tdev.PowerLimitConstraints() error: %v\n", err)
+		} else {
+			fmt.Printf("\tpower.min_limit: %v\n", minLimit / 1000)
+			fmt.Printf("\tpower.max_limit: %v\n", maxLimit / 1000)
+		}
+
+		err = dev.SetPowerLimit(180000)
+		if err != nil {
+			fmt.Printf("\tdev.SetPowerLimit(%v) error: %v\n", powerLimit/1000, err)
+		} else {
+			fmt.Printf("\tnew power.limit: %v\n", powerLimit/1000)
+		}
 
 		powerDraw, err := dev.PowerUsage()
 		if err != nil {
