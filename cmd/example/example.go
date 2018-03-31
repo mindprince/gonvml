@@ -85,9 +85,9 @@ func main() {
 		gpuUtilization, memoryUtilization, err := dev.UtilizationRates()
 		if err != nil {
 			fmt.Printf("\tdev.UtilizationRates() error: %v\n", err)
-		} else {
-			fmt.Printf("\tutilization.gpu: %v, utilization.memory: %v\n", gpuUtilization, memoryUtilization)
+			return
 		}
+		fmt.Printf("\tutilization.gpu: %v, utilization.memory: %v\n", gpuUtilization, memoryUtilization)
 
 		powerLimit, err := dev.PowerLimit()
 		if err != nil {
