@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aleksandrov/gonvml"
+	"github.com/mindprince/gonvml"
 )
 
 func main() {

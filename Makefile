@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PKG=github.com/aleksandrov/gonvml
+PKG=github.com/mindprince/gonvml
 
 .PHONY: build
 build:
