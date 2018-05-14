@@ -220,7 +220,7 @@ nvmlReturn_t nvmlInit_dl(void) {
   nvmlDeviceGetDecoderUtilizationFunc = dlsym(nvmlHandle, "nvmlDeviceGetDecoderUtilization");
   if (nvmlDeviceGetDecoderUtilizationFunc == NULL) {
     return NVML_ERROR_FUNCTION_NOT_FOUND;
-  } 
+  }
   nvmlReturn_t result = nvmlInitFunc();
   if (result != NVML_SUCCESS) {
     dlclose(nvmlHandle);
@@ -499,26 +499,26 @@ func (d Device) FanSpeed() (uint, error) {
 	return uint(n), errorString(r)
 }
 
-// EncoderUtilization returns the percentage of utilization and sampling size in microseconds for the Encoder,
-// the first return value is the percentage of utilization, the second return value is the sampling size in microseconds 
+// EncoderUtilization returns the percent of time over the last sample period during which the GPU video encoder was being used.
+// The sampling period is variable and is returned in the second return argument in microseconds.
 func (d Device) EncoderUtilization() (uint, uint, error) {
 	if C.nvmlHandle == nil {
 		return 0, 0, errLibraryNotLoaded
-  }
-  var n C.uint
-  var sp C.uint
-  r := C.nvmlDeviceGetEncoderUtilization(d.dev, &n, &sp)
-  return uint(n), uint(sp), errorString(r) 
+	}
+	var n C.uint
+	var sp C.uint
+	r := C.nvmlDeviceGetEncoderUtilization(d.dev, &n, &sp)
+	return uint(n), uint(sp), errorString(r)
 }
 
-// DecoderUtilization returns the percentage of utilization and sampling size in microseconds for the Decoder,
-// the first return value is the percentage of utilization, the second return value is the sampling size in microseconds 
-func (d Device) DecoderUtilization() (uint, uint, error){
+// DecoderUtilization returns the percent of time over the last sample period during which the GPU video decoder was being used.
+// The sampling period is variable and is returned in the second return argument in microseconds.
+func (d Device) DecoderUtilization() (uint, uint, error) {
 	if C.nvmlHandle == nil {
 		return 0, 0, errLibraryNotLoaded
-  }
-  var n C.uint
-  var sp C.uint
-  r := C.nvmlDeviceGetDecoderUtilization(d.dev, &n, &sp)
-  return uint(n), uint(sp), errorString(r) 
+	}
+	var n C.uint
+	var sp C.uint
+	r := C.nvmlDeviceGetDecoderUtilization(d.dev, &n, &sp)
+	return uint(n), uint(sp), errorString(r)
 }
