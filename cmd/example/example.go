@@ -123,6 +123,20 @@ func main() {
 			return
 		}
 		fmt.Printf("\tfan.speed: %v%%\n", fanSpeed)
+
+		encoderUtilization, _, err := dev.EncoderUtilization()
+		if err != nil {
+			fmt.Printf("\tdev.EncoderUtilization() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\tutilization.encoder: %d\n", encoderUtilization)
+
+		decoderUtilization, _, err := dev.DecoderUtilization()
+		if err != nil {
+			fmt.Printf("\tdev.DecoderUtilization() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\tutilization.decoder: %d\n", decoderUtilization)
 		fmt.Println()
 	}
 }
