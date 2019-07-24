@@ -1,0 +1,11 @@
+# IDE
+.idea
+
+# editor
+.vscode
+
+# Mac
+.DS_Store
+
+# OutPut
+example
