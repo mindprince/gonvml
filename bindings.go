@@ -159,14 +159,6 @@ nvmlReturn_t nvmlDeviceGetAccountingMode(nvmlDevice_t device, nvmlEnableState_t 
   return nvmlDeviceGetAccountingModeFunc(device, mode);
 }
 
-nvmlReturn_t (*nvmlDeviceSetAccountingModeFunc)(nvmlDevice_t device, nvmlEnableState_t mode);
-nvmlReturn_t nvmlDeviceSetAccountingMode(nvmlDevice_t device, nvmlEnableState_t mode) {
-  if (nvmlDeviceSetAccountingModeFunc == NULL) {
-    return NVML_ERROR_FUNCTION_NOT_FOUND;
-  }
-  return nvmlDeviceSetAccountingModeFunc(device, mode);
-}
-
 nvmlReturn_t (*nvmlDeviceGetAccountingStatsFunc)(nvmlDevice_t device, unsigned int pid, nvmlAccountingStats_t *stats);
 nvmlReturn_t nvmlDeviceGetAccountingStats(nvmlDevice_t device, unsigned int pid, nvmlAccountingStats_t *stats) {
   if (nvmlDeviceGetAccountingStatsFunc == NULL) {
@@ -286,10 +278,6 @@ nvmlReturn_t nvmlInit_dl(void) {
   }
   nvmlDeviceGetAccountingModeFunc = dlsym(nvmlHandle, "nvmlDeviceGetAccountingMode");
   if (nvmlDeviceGetAccountingModeFunc == NULL) {
-    return NVML_ERROR_FUNCTION_NOT_FOUND;
-  }
-  nvmlDeviceSetAccountingModeFunc = dlsym(nvmlHandle, "nvmlDeviceSetAccountingMode");
-  if (nvmlDeviceSetAccountingModeFunc == NULL) {
     return NVML_ERROR_FUNCTION_NOT_FOUND;
   }
   nvmlDeviceGetAccountingStatsFunc = dlsym(nvmlHandle, "nvmlDeviceGetAccountingStats");
@@ -630,20 +618,6 @@ func (d Device) AccountingMode() (C.nvmlEnableState_t, error) {
 	}
 	r := C.nvmlDeviceGetAccountingMode(d.dev, &stats)
 	return stats, errorString(r)
-}
-
-// DeviceSetAccountingMode Queries the state of per process accounting mode.
-// @param enable                               Whether enable nvml's accounting mode
-func (d Device) DeviceSetAccountingMode(enable bool) error {
-	if C.nvmlHandle == nil {
-		return errLibraryNotLoaded
-	}
-	var mode C.nvmlEnableState_t = C.NVML_FEATURE_DISABLED
-	if enable {
-		mode = C.NVML_FEATURE_ENABLED
-	}
-	r := C.nvmlDeviceSetAccountingMode(d.dev, mode)
-	return errorString(r)
 }
 
 // DeviceGetAccountingStats Queries process's accounting stats.
