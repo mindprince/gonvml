@@ -462,6 +462,36 @@ type Utilization struct {
 	DecUtil   uint   //!< Decoder Util Value
 }
 
+// AccountingStats is a Structire to Store accounting Stats for every process
+type AccountingStats struct {
+	GPUUtilization uint
+	//!< Percent of time over the process's lifetime during which one or more kernels was executing on the GPU.
+	//! Utilization stats just like returned by \ref nvmlDeviceGetUtilizationRates but for the life time of a
+	//! process (not just the last sample period).
+	//! Set to NVML_VALUE_NOT_AVAILABLE if nvmlDeviceGetUtilizationRates is not supported
+
+	MemoryUtilization uint
+	//!< Percent of time over the process's lifetime during which global (device) memory was being read or written.
+	//! Set to NVML_VALUE_NOT_AVAILABLE if nvmlDeviceGetUtilizationRates is not supported
+
+	MaxMemoryUsage uint64
+	//!< Maximum total memory in bytes that was ever allocated by the process.
+	//! Set to NVML_VALUE_NOT_AVAILABLE if nvmlProcessInfo_t->usedGpuMemory is not supported
+
+	Time uint64
+	//!< Amount of time in ms during which the compute context was active. The time is reported as 0 if
+	//!< the process is not terminated
+
+	StartTime uint64
+	//!< CPU Timestamp in usec representing start time for the process
+
+	IsRunning bool
+	//!< Flag to represent if the process is running (1 for running, 0 for terminated)
+
+	Reserved [5]uint
+	// Reserved for
+}
+
 // DeviceHandleByIndex returns the device handle for a particular index.
 // The indices range from 0 to DeviceCount()-1. The order in which NVML
 // enumerates devices has no guarantees of consistency between reboots.
@@ -623,13 +653,23 @@ func (d Device) AccountingMode() (C.nvmlEnableState_t, error) {
 // DeviceGetAccountingStats Queries process's accounting stats.
 // @param pid                                  Process Id of the target process to query stats for
 // @return stats                               Reference in which to return the process's accounting stats
-func (d Device) AccountingStats(pid uint) (C.nvmlAccountingStats_t, error) {
-	var stats C.nvmlAccountingStats_t
+func (d Device) AccountingStats(pid uint) (*AccountingStats, error) {
 	if C.nvmlHandle == nil {
-		return stats, errLibraryNotLoaded
+		return nil, errLibraryNotLoaded
 	}
+	var stats C.nvmlAccountingStats_t
 	r := C.nvmlDeviceGetAccountingStats(d.dev, C.uint(pid), &stats)
-	return stats, errorString(r)
+
+	accountingStats := &AccountingStats{
+		GPUUtilization:    uint(stats.gpuUtilization),
+		MemoryUtilization: uint(stats.memoryUtilization),
+		MaxMemoryUsage:    uint64(stats.maxMemoryUsage),
+		Time:              uint64(stats.time),
+		StartTime:         uint64(stats.startTime),
+		IsRunning:         uint(stats.isRunning) == 1,
+	}
+
+	return accountingStats, errorString(r)
 }
 
 // DeviceGetAccountingPids Queries list of processes that can be queried for accounting stats. The list of processes returned
@@ -689,9 +729,14 @@ func (d Device) ProcessUtilization(processCount uint, since time.Duration) ([]*U
 		return nil, errorString(r)
 	}
 
-	utilizations := make([]*Utilization, runningProcess)
+	statisticsProcess := uint(runningProcess)
+	if processCount < uint(runningProcess) {
+		statisticsProcess = processCount
+	}
+
+	utilizations := make([]*Utilization, statisticsProcess)
 	utilCount := 0
-	for _, utilization := range cUtilizations[:runningProcess] {
+	for _, utilization := range cUtilizations[:statisticsProcess] {
 		if utilization.pid <= 0 {
 			continue
 		}

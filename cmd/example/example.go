@@ -163,7 +163,13 @@ func main() {
 				if err != nil {
 					fmt.Printf("\tdev.DeviceGetAccountingStats() error: %v\n", err)
 				} else {
-					fmt.Printf(", stats: %s\n", stats)
+					fmt.Printf(", GPUUtilization: %v", stats.GPUUtilization)
+					fmt.Printf(", MemoryUtilization: %v", stats.MemoryUtilization)
+					fmt.Printf(", MaxMemoryUsage: %v", stats.MaxMemoryUsage)
+					fmt.Printf(", Time: %v", stats.Time)
+					fmt.Printf(", StartTime: %v", stats.StartTime)
+					fmt.Printf(", IsRunning: %v", stats.IsRunning)
+					fmt.Println()
 				}
 			}
 		}
