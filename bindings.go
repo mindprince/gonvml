@@ -143,6 +143,57 @@ nvmlReturn_t nvmlDeviceGetDecoderUtilization(nvmlDevice_t device, unsigned int* 
   return nvmlDeviceGetDecoderUtilizationFunc(device, utilization, samplingPeriodUs);
 }
 
+nvmlReturn_t (*nvmlSystemGetProcessNameFunc)(unsigned int pid, char *name, unsigned int length);
+nvmlReturn_t nvmlSystemGetProcessName(unsigned int pid, char *name, unsigned int length) {
+  if (nvmlSystemGetProcessNameFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlSystemGetProcessNameFunc(pid, name, length);
+}
+
+nvmlReturn_t (*nvmlDeviceGetAccountingModeFunc)(nvmlDevice_t device, nvmlEnableState_t *mode);
+nvmlReturn_t nvmlDeviceGetAccountingMode(nvmlDevice_t device, nvmlEnableState_t *mode) {
+  if (nvmlDeviceGetAccountingModeFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetAccountingModeFunc(device, mode);
+}
+
+nvmlReturn_t (*nvmlDeviceGetAccountingStatsFunc)(nvmlDevice_t device, unsigned int pid, nvmlAccountingStats_t *stats);
+nvmlReturn_t nvmlDeviceGetAccountingStats(nvmlDevice_t device, unsigned int pid, nvmlAccountingStats_t *stats) {
+  if (nvmlDeviceGetAccountingStatsFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetAccountingStatsFunc(device, pid, stats);
+}
+
+
+nvmlReturn_t (*nvmlDeviceGetAccountingPidsFunc)(nvmlDevice_t device, unsigned int *count, unsigned int *pids);
+nvmlReturn_t nvmlDeviceGetAccountingPids(nvmlDevice_t device, unsigned int *count, unsigned int *pids) {
+  if (nvmlDeviceGetAccountingPidsFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetAccountingPidsFunc(device, count, pids);
+}
+
+nvmlReturn_t (*nvmlDeviceGetAccountingBufferSizeFunc)(nvmlDevice_t device, unsigned int* bufferSize);
+nvmlReturn_t nvmlDeviceGetAccountingBufferSize(nvmlDevice_t device, unsigned int* bufferSize) {
+  if (nvmlDeviceGetAccountingBufferSizeFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetAccountingBufferSizeFunc(device, bufferSize);
+}
+
+nvmlReturn_t (*nvmlDeviceGetProcessUtilizationFunc)(nvmlDevice_t device, nvmlProcessUtilizationSample_t *utilization,
+                                              unsigned int *processSamplesCount, unsigned long long lastSeenTimeStamp);
+nvmlReturn_t nvmlDeviceGetProcessUtilization(nvmlDevice_t device, nvmlProcessUtilizationSample_t *utilization,
+                                              unsigned int *processSamplesCount, unsigned long long lastSeenTimeStamp){
+  if (nvmlDeviceGetProcessUtilizationFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetProcessUtilizationFunc(device, utilization, processSamplesCount, lastSeenTimeStamp);
+}
+
 nvmlReturn_t (*nvmlDeviceGetSamplesFunc)(nvmlDevice_t device, nvmlSamplingType_t type, unsigned long long lastSeenTimeStamp, nvmlValueType_t *sampleValType, unsigned int *sampleCount, nvmlSample_t *samples);
 
 // Loads the "libnvidia-ml.so.1" shared library.
@@ -221,6 +272,31 @@ nvmlReturn_t nvmlInit_dl(void) {
   if (nvmlDeviceGetDecoderUtilizationFunc == NULL) {
     return NVML_ERROR_FUNCTION_NOT_FOUND;
   }
+  nvmlSystemGetProcessNameFunc = dlsym(nvmlHandle, "nvmlSystemGetProcessName");
+  if (nvmlSystemGetProcessNameFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetAccountingModeFunc = dlsym(nvmlHandle, "nvmlDeviceGetAccountingMode");
+  if (nvmlDeviceGetAccountingModeFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetAccountingStatsFunc = dlsym(nvmlHandle, "nvmlDeviceGetAccountingStats");
+  if (nvmlDeviceGetAccountingStatsFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetAccountingPidsFunc = dlsym(nvmlHandle, "nvmlDeviceGetAccountingPids");
+  if (nvmlDeviceGetAccountingPidsFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetAccountingBufferSizeFunc = dlsym(nvmlHandle, "nvmlDeviceGetAccountingBufferSize");
+  if (nvmlDeviceGetAccountingBufferSizeFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetProcessUtilizationFunc = dlsym(nvmlHandle, "nvmlDeviceGetProcessUtilization");
+  if (nvmlDeviceGetProcessUtilizationFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+
   nvmlReturn_t result = nvmlInitFunc();
   if (result != NVML_SUCCESS) {
     dlclose(nvmlHandle);
@@ -376,6 +452,46 @@ type Device struct {
 	dev C.nvmlDevice_t
 }
 
+// Utilization is Structure to store utilization value and process Id
+type Utilization struct {
+	Pid       uint   //!< PID of process
+	timeStamp uint64 //!< CPU Timestamp in microseconds
+	SMUtil    uint   //!< SM (3D/Compute) Util Value
+	MemUtil   uint   //!< Frame Buffer Memory Util Value
+	EncUtil   uint   //!< Encoder Util Value
+	DecUtil   uint   //!< Decoder Util Value
+}
+
+// AccountingStats is a Structire to Store accounting Stats for every process
+type AccountingStats struct {
+	GPUUtilization uint
+	//!< Percent of time over the process's lifetime during which one or more kernels was executing on the GPU.
+	//! Utilization stats just like returned by \ref nvmlDeviceGetUtilizationRates but for the life time of a
+	//! process (not just the last sample period).
+	//! Set to NVML_VALUE_NOT_AVAILABLE if nvmlDeviceGetUtilizationRates is not supported
+
+	MemoryUtilization uint
+	//!< Percent of time over the process's lifetime during which global (device) memory was being read or written.
+	//! Set to NVML_VALUE_NOT_AVAILABLE if nvmlDeviceGetUtilizationRates is not supported
+
+	MaxMemoryUsage uint64
+	//!< Maximum total memory in bytes that was ever allocated by the process.
+	//! Set to NVML_VALUE_NOT_AVAILABLE if nvmlProcessInfo_t->usedGpuMemory is not supported
+
+	Time uint64
+	//!< Amount of time in ms during which the compute context was active. The time is reported as 0 if
+	//!< the process is not terminated
+
+	StartTime uint64
+	//!< CPU Timestamp in usec representing start time for the process
+
+	IsRunning bool
+	//!< Flag to represent if the process is running (1 for running, 0 for terminated)
+
+	Reserved [5]uint
+	// Reserved for
+}
+
 // DeviceHandleByIndex returns the device handle for a particular index.
 // The indices range from 0 to DeviceCount()-1. The order in which NVML
 // enumerates devices has no guarantees of consistency between reboots.
@@ -521,4 +637,133 @@ func (d Device) DecoderUtilization() (uint, uint, error) {
 	var sp C.uint
 	r := C.nvmlDeviceGetDecoderUtilization(d.dev, &n, &sp)
 	return uint(n), uint(sp), errorString(r)
+}
+
+// DeviceGetAccountingMode Queries process's accounting stats
+// @return mode                                 Reference in which to return the current accounting mode
+func (d Device) AccountingMode() (C.nvmlEnableState_t, error) {
+	var stats C.nvmlEnableState_t
+	if C.nvmlHandle == nil {
+		return stats, errLibraryNotLoaded
+	}
+	r := C.nvmlDeviceGetAccountingMode(d.dev, &stats)
+	return stats, errorString(r)
+}
+
+// DeviceGetAccountingStats Queries process's accounting stats.
+// @param pid                                  Process Id of the target process to query stats for
+// @return stats                               Reference in which to return the process's accounting stats
+func (d Device) AccountingStats(pid uint) (*AccountingStats, error) {
+	if C.nvmlHandle == nil {
+		return nil, errLibraryNotLoaded
+	}
+	var stats C.nvmlAccountingStats_t
+	r := C.nvmlDeviceGetAccountingStats(d.dev, C.uint(pid), &stats)
+
+	accountingStats := &AccountingStats{
+		GPUUtilization:    uint(stats.gpuUtilization),
+		MemoryUtilization: uint(stats.memoryUtilization),
+		MaxMemoryUsage:    uint64(stats.maxMemoryUsage),
+		Time:              uint64(stats.time),
+		StartTime:         uint64(stats.startTime),
+		IsRunning:         uint(stats.isRunning) == 1,
+	}
+
+	return accountingStats, errorString(r)
+}
+
+// DeviceGetAccountingPids Queries list of processes that can be queried for accounting stats. The list of processes returned
+// @param count                                Maxnum pids
+// @return pids                                Pids result
+// @return count                               Queried pids num
+func (d Device) AccountingPids(count uint) ([]C.uint, uint, error) {
+	// init pids
+	cCount := C.uint(count)
+	if C.nvmlHandle == nil {
+		return nil, 0, errLibraryNotLoaded
+	}
+	if count == 0 {
+		r := C.nvmlDeviceGetAccountingPids(d.dev, &cCount, nil)
+		return nil, uint(cCount), errorString(r)
+	}
+
+	pids := make([]C.uint, count)
+	for index := range pids {
+		pids[index] = 0
+	}
+
+	r := C.nvmlDeviceGetAccountingPids(d.dev, &cCount, &pids[0])
+	return pids, uint(cCount), errorString(r)
+}
+
+// DeviceGetAccountingBufferSize Returns the number of processes that the circular buffer with accounting pids can hold.
+// @return buffersize                        buffersize
+func (d Device) AccountingBufferSize() (uint, error) {
+	if C.nvmlHandle == nil {
+		return 0, errLibraryNotLoaded
+	}
+	var bufferSize C.uint
+	r := C.nvmlDeviceGetAccountingBufferSize(d.dev, &bufferSize)
+	return uint(bufferSize), errorString(r)
+}
+
+// DeviceGetProcessUtilization Retrieves the current utilization and process ID
+// @param processCount                      Maxnum process buffersize
+// @param since                             The last query time for process
+// @return utilizations                     The utilizations for all process
+// @return processCount                     The queried utilizations
+func (d Device) ProcessUtilization(processCount uint, since time.Duration) ([]*Utilization, error) {
+	if C.nvmlHandle == nil {
+		return nil, errLibraryNotLoaded
+	}
+	if processCount <= 0 {
+		return nil, errors.New("Process Count Less than zero")
+	}
+
+	cUtilizations := make([]C.nvmlProcessUtilizationSample_t, processCount)
+	var runningProcess C.uint = C.uint(processCount * C.sizeof_nvmlProcessUtilizationSample_t)
+
+	lastTS := C.ulonglong(time.Now().Add(-1*since).UnixNano() / 1000)
+	r := C.nvmlDeviceGetProcessUtilization(d.dev, &cUtilizations[0], &runningProcess, lastTS)
+	if errorString(r) != nil {
+		return nil, errorString(r)
+	}
+
+	statisticsProcess := uint(runningProcess)
+	if processCount < uint(runningProcess) {
+		statisticsProcess = processCount
+	}
+
+	utilizations := make([]*Utilization, statisticsProcess)
+	utilCount := 0
+	for _, utilization := range cUtilizations[:statisticsProcess] {
+		if utilization.pid <= 0 {
+			continue
+		}
+		u := &Utilization{
+			Pid:       uint(utilization.pid),
+			timeStamp: uint64(utilization.timeStamp),
+			SMUtil:    uint(utilization.smUtil),
+			MemUtil:   uint(utilization.memUtil),
+			EncUtil:   uint(utilization.encUtil),
+			DecUtil:   uint(utilization.decUtil),
+		}
+		utilizations[utilCount] = u
+		utilCount++
+	}
+
+	return utilizations[:utilCount], errorString(r)
+}
+
+// SystemGetProcessName GetProcessName by pid
+// @param pid                      Process's id
+// @param buffersize               The process name's buffersize
+// @return name                    Process name
+func SystemGetProcessName(pid, buffersize uint) (string, error) {
+	if C.nvmlHandle == nil {
+		return "", errLibraryNotLoaded
+	}
+	c := make([]C.char, buffersize)
+	r := C.nvmlSystemGetProcessName(C.uint(pid), &c[0], C.uint(buffersize))
+	return C.GoString(&c[0]), errorString(r)
 }

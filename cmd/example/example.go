@@ -137,6 +137,66 @@ func main() {
 			return
 		}
 		fmt.Printf("\tutilization.decoder: %d\n", decoderUtilization)
+
+		modeStats, err := dev.AccountingMode()
+		if err != nil {
+			fmt.Printf("\tdev.DeviceGetAccountingMode() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\taccounting.mode enable: %v\n", modeStats)
+
+		bufferSize, err := dev.AccountingBufferSize()
+		if err != nil {
+			fmt.Printf("\tdev.DeviceGetAccountingBufferSize() error: %v\n", err)
+			return
+		}
+		fmt.Printf("\taccounting.buffersize: %d\n", bufferSize)
+
+		pids, count, err := dev.AccountingPids(bufferSize)
+		if err != nil {
+			fmt.Printf("\tdev.DeviceGetAccountingPids() error: %v\n", err)
+		} else {
+			fmt.Printf("\taccounting.pids.count: %v\n", count)
+			for _, pid := range pids[:count] {
+				fmt.Printf("\t\tPid: %v", pid)
+				stats, err := dev.AccountingStats(uint(pid))
+				if err != nil {
+					fmt.Printf("\tdev.DeviceGetAccountingStats() error: %v\n", err)
+				} else {
+					fmt.Printf(", GPUUtilization: %v", stats.GPUUtilization)
+					fmt.Printf(", MemoryUtilization: %v", stats.MemoryUtilization)
+					fmt.Printf(", MaxMemoryUsage: %v", stats.MaxMemoryUsage)
+					fmt.Printf(", Time: %v", stats.Time)
+					fmt.Printf(", StartTime: %v", stats.StartTime)
+					fmt.Printf(", IsRunning: %v", stats.IsRunning)
+					fmt.Println()
+				}
+			}
+		}
+
+		utilizations, err := dev.ProcessUtilization(10, 10*time.Second)
+		if err != nil {
+			fmt.Printf("\tdev.DeviceGetProcessUtilization() error: %v\n", err)
+		} else {
+			fmt.Printf("\tProcess count: %v\n", len(utilizations))
+
+			utilizations = utilizations
+			for _, sample := range utilizations {
+				fmt.Printf("\t\tProcess: %v", sample.Pid)
+				fmt.Printf(", SM  util: %v", sample.SMUtil)
+				fmt.Printf(", Mem util: %v", sample.MemUtil)
+				fmt.Printf(", Enc util: %v", sample.EncUtil)
+				fmt.Printf(", Dec util: %v", sample.DecUtil)
+
+				name, err := gonvml.SystemGetProcessName(sample.Pid, 64)
+				if err != nil {
+					fmt.Printf("\n\tdev.SystemGetProcessName() error: %v\n", err)
+				} else {
+					fmt.Printf(", Name: %s\n", name)
+				}
+			}
+		}
+
 		fmt.Println()
 	}
 }
