@@ -87,6 +87,14 @@ nvmlReturn_t nvmlDeviceGetName(nvmlDevice_t device, char *name, unsigned int len
   return nvmlDeviceGetNameFunc(device, name, length);
 }
 
+nvmlReturn_t (*nvmlDeviceGetBrandFunc)(nvmlDevice_t device, nvmlBrandType_t *type);
+nvmlReturn_t nvmlDeviceGetBrand(nvmlDevice_t device, nvmlBrandType_t *type) {
+  if (nvmlDeviceGetBrandFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetBrandFunc(device, type);
+}
+
 nvmlReturn_t (*nvmlDeviceGetMemoryInfoFunc)(nvmlDevice_t device, nvmlMemory_t *memory);
 nvmlReturn_t nvmlDeviceGetMemoryInfo(nvmlDevice_t device, nvmlMemory_t *memory) {
   if (nvmlDeviceGetMemoryInfoFunc == NULL) {
@@ -187,6 +195,10 @@ nvmlReturn_t nvmlInit_dl(void) {
   }
   nvmlDeviceGetNameFunc = dlsym(nvmlHandle, "nvmlDeviceGetName");
   if (nvmlDeviceGetNameFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetBrandFunc = dlsym(nvmlHandle, "nvmlDeviceGetBrand");
+  if (nvmlDeviceGetBrandFunc == NULL) {
     return NVML_ERROR_FUNCTION_NOT_FOUND;
   }
   nvmlDeviceGetMemoryInfoFunc = dlsym(nvmlHandle, "nvmlDeviceGetMemoryInfo");
@@ -418,6 +430,16 @@ func (d Device) Name() (string, error) {
 	var name [szName]C.char
 	r := C.nvmlDeviceGetName(d.dev, &name[0], szName)
 	return C.GoString(&name[0]), errorString(r)
+}
+
+// Brand returns the product Brand of the device.
+func (d Device) Brand() (uint, error) {
+	if C.nvmlHandle == nil {
+		return 0, errLibraryNotLoaded
+	}
+	var brand C.nvmlBrandType_t
+	r := C.nvmlDeviceGetBrand(d.dev, &brand)
+	return uint(brand), errorString(r)
 }
 
 // MemoryInfo returns the total and used memory (in bytes) of the device.
