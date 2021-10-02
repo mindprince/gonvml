@@ -50,93 +50,93 @@ func main() {
 	for i := 0; i < int(numDevices); i++ {
 		dev, err := gonvml.DeviceHandleByIndex(uint(i))
 		if err != nil {
-			fmt.Printf("\tDeviceHandleByIndex() error: %v\n", err)
-			return
+			fmt.Printf("\tDeviceHandleByIndex(%d) error: %v\n", i, err)
+			continue
 		}
 
 		minorNumber, err := dev.MinorNumber()
 		if err != nil {
 			fmt.Printf("\tdev.MinorNumber() error: %v\n", err)
-			return
+		} else {
+			fmt.Printf("\tminorNumber: %v\n", minorNumber)
 		}
-		fmt.Printf("\tminorNumber: %v\n", minorNumber)
 
 		uuid, err := dev.UUID()
 		if err != nil {
-			fmt.Printf("\tdev.UUID() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.UUID() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tuuid: %v\n", uuid)
 		}
-		fmt.Printf("\tuuid: %v\n", uuid)
 
 		name, err := dev.Name()
 		if err != nil {
-			fmt.Printf("\tdev.Name() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.Name() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tname: %v\n", name)
 		}
-		fmt.Printf("\tname: %v\n", name)
 
 		totalMemory, usedMemory, err := dev.MemoryInfo()
 		if err != nil {
-			fmt.Printf("\tdev.MemoryInfo() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.MemoryInfo() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tmemory.total: %v, memory.used: %v\n", totalMemory, usedMemory)
 		}
-		fmt.Printf("\tmemory.total: %v, memory.used: %v\n", totalMemory, usedMemory)
 
 		gpuUtilization, memoryUtilization, err := dev.UtilizationRates()
 		if err != nil {
-			fmt.Printf("\tdev.UtilizationRates() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.UtilizationRates() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tutilization.gpu: %v, utilization.memory: %v\n", gpuUtilization, memoryUtilization)
 		}
-		fmt.Printf("\tutilization.gpu: %v, utilization.memory: %v\n", gpuUtilization, memoryUtilization)
 
 		powerDraw, err := dev.PowerUsage()
 		if err != nil {
-			fmt.Printf("\tdev.PowerUsage() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.PowerUsage() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tpower.draw: %v\n", powerDraw)
 		}
-		fmt.Printf("\tpower.draw: %v\n", powerDraw)
 
 		averagePowerDraw, err := dev.AveragePowerUsage(10 * time.Second)
 		if err != nil {
-			fmt.Printf("\tdev.AveragePowerUsage() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.AveragePowerUsage() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\taverage power.draw for last 10s: %v\n", averagePowerDraw)
 		}
-		fmt.Printf("\taverage power.draw for last 10s: %v\n", averagePowerDraw)
 
 		averageGPUUtilization, err := dev.AverageGPUUtilization(10 * time.Second)
 		if err != nil {
-			fmt.Printf("\tdev.AverageGPUUtilization() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.AverageGPUUtilization() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\taverage utilization.gpu for last 10s: %v\n", averageGPUUtilization)
 		}
-		fmt.Printf("\taverage utilization.gpu for last 10s: %v\n", averageGPUUtilization)
 
 		temperature, err := dev.Temperature()
 		if err != nil {
-			fmt.Printf("\tdev.Temperature() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.Temperature() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\ttemperature.gpu: %v C\n", temperature)
 		}
-		fmt.Printf("\ttemperature.gpu: %v C\n", temperature)
 
 		fanSpeed, err := dev.FanSpeed()
 		if err != nil {
-			fmt.Printf("\tdev.FanSpeed() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.FanSpeed() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tfan.speed: %v%%\n", fanSpeed)
 		}
-		fmt.Printf("\tfan.speed: %v%%\n", fanSpeed)
 
 		encoderUtilization, _, err := dev.EncoderUtilization()
 		if err != nil {
-			fmt.Printf("\tdev.EncoderUtilization() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.EncoderUtilization() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tutilization.encoder: %d\n", encoderUtilization)
 		}
-		fmt.Printf("\tutilization.encoder: %d\n", encoderUtilization)
 
 		decoderUtilization, _, err := dev.DecoderUtilization()
 		if err != nil {
-			fmt.Printf("\tdev.DecoderUtilization() error: %v\n", err)
-			return
+			fmt.Printf("\t\tdev.DecoderUtilization() error: %v\n", err)
+		} else {
+			fmt.Printf("\t\tutilization.decoder: %d\n", decoderUtilization)
 		}
-		fmt.Printf("\tutilization.decoder: %d\n", decoderUtilization)
 		fmt.Println()
 	}
 }
