@@ -20,4 +20,5 @@ build:
 
 .PHONY: presubmit
 presubmit:
-	./.travis.gofmt.sh
+	./.gofmt.sh
+	./.gobuild.sh
