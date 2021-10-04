@@ -111,6 +111,31 @@ nvmlReturn_t nvmlDeviceGetPowerUsage(nvmlDevice_t device, unsigned int *power) {
   return nvmlDeviceGetPowerUsageFunc(device, power);
 }
 
+nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitFunc)(nvmlDevice_t device, unsigned int *power);
+nvmlReturn_t nvmlDeviceGetPowerManagementLimit(nvmlDevice_t device, unsigned int *power) {
+  if (nvmlDeviceGetPowerManagementLimitFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetPowerManagementLimitFunc(device, power);
+}
+
+nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsFunc)(nvmlDevice_t device, unsigned int *minLimit, unsigned int *maxLimit);
+nvmlReturn_t nvmlDeviceGetPowerManagementLimitConstraints(nvmlDevice_t device, unsigned int *minLimit, unsigned int *maxLimit) {
+  if (nvmlDeviceGetPowerManagementLimitConstraintsFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceGetPowerManagementLimitConstraintsFunc(device, minLimit, maxLimit);
+}
+
+nvmlReturn_t (*nvmlDeviceSetPowerManagementLimitFunc)(nvmlDevice_t device, unsigned int power);
+nvmlReturn_t nvmlDeviceSetPowerManagementLimit(nvmlDevice_t device, unsigned int power) {
+  if (nvmlDeviceSetPowerManagementLimitFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  return nvmlDeviceSetPowerManagementLimitFunc(device, power);
+}
+
+
 nvmlReturn_t (*nvmlDeviceGetTemperatureFunc)(nvmlDevice_t device, nvmlTemperatureSensors_t sensorType, unsigned int *temp);
 nvmlReturn_t nvmlDeviceGetTemperature(nvmlDevice_t device, nvmlTemperatureSensors_t sensorType, unsigned int *temp) {
   if (nvmlDeviceGetTemperatureFunc == NULL) {
@@ -199,6 +224,18 @@ nvmlReturn_t nvmlInit_dl(void) {
   }
   nvmlDeviceGetPowerUsageFunc = dlsym(nvmlHandle, "nvmlDeviceGetPowerUsage");
   if (nvmlDeviceGetPowerUsageFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetPowerManagementLimitFunc = dlsym(nvmlHandle, "nvmlDeviceGetPowerManagementLimit");
+  if (nvmlDeviceGetPowerManagementLimitFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceGetPowerManagementLimitConstraintsFunc = dlsym(nvmlHandle, "nvmlDeviceGetPowerManagementLimitConstraints");
+  if (nvmlDeviceGetPowerManagementLimitConstraintsFunc == NULL) {
+    return NVML_ERROR_FUNCTION_NOT_FOUND;
+  }
+  nvmlDeviceSetPowerManagementLimitFunc = dlsym(nvmlHandle, "nvmlDeviceSetPowerManagementLimit");
+  if (nvmlDeviceSetPowerManagementLimitFunc == NULL) {
     return NVML_ERROR_FUNCTION_NOT_FOUND;
   }
   nvmlDeviceGetTemperatureFunc = dlsym(nvmlHandle, "nvmlDeviceGetTemperature");
@@ -451,6 +488,37 @@ func (d Device) PowerUsage() (uint, error) {
 	var n C.uint
 	r := C.nvmlDeviceGetPowerUsage(d.dev, &n)
 	return uint(n), errorString(r)
+}
+
+// PowerLimit retrieves the power management limit associated with this device.
+func (d Device) PowerLimit() (uint, error) {
+	if C.nvmlHandle == nil {
+		return 0, errLibraryNotLoaded
+	}
+	var n C.uint
+	r := C.nvmlDeviceGetPowerManagementLimit(d.dev, &n)
+	return uint(n), errorString(r)
+}
+
+// PowerLimitConstraints retrieves information about possible values of power management limits on this device.
+func (d Device) PowerLimitConstraints() (uint, uint, error) {
+	if C.nvmlHandle == nil {
+		return 0, 0, errLibraryNotLoaded
+	}
+	var min C.uint
+	var max C.uint
+	r := C.nvmlDeviceGetPowerManagementLimitConstraints(d.dev, &min, &max)
+	return uint(min), uint(max), errorString(r)
+}
+
+// Set new power limit of this device.
+func (d Device) SetPowerLimit(pl uint) error {
+
+	if C.nvmlHandle == nil {
+		return errLibraryNotLoaded
+	}
+	r := C.nvmlDeviceSetPowerManagementLimit(d.dev, C.uint(pl))
+	return errorString(r)
 }
 
 // AveragePowerUsage returns the power usage for this GPU and its associated circuitry
